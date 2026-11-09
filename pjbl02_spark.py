@@ -124,5 +124,17 @@ q8 = (transacoes
 registrar(8, "Preço máximo e mínimo por ano e categoria", q8)
 
 
+# 9 - país com a maior exportação, somando o valor exportado em USD
+q9 = (transacoes
+      .filter(lambda x: x[FLOW] == "Export")
+      .map(lambda x: ((x[PAIS], x[FLOW]), float(x[PRECO])))
+      .reduceByKey(lambda a, b: a + b)
+      .sortBy(lambda x: x[1], ascending=False)
+      .collect())
+registrar(9, "País com a maior exportação (PairRDD)", q9[0])
+
+transacoes.unpersist()
+
+
 saida.close()
 spark.stop()
