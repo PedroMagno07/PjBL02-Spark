@@ -82,5 +82,15 @@ q4 = (transacoes
 registrar(4, "Número de transações envolvendo o Brasil em 2016 (PairRDD)", q4)
 
 
+# 5 - transações por flow e por ano a partir de 2010
+q5 = (transacoes
+      .filter(lambda x: int(x[ANO]) >= 2010)
+      .map(lambda x: ((int(x[ANO]), x[FLOW].upper()), 1))
+      .reduceByKey(lambda a, b: a + b)
+      .sortByKey()
+      .collect())
+registrar(5, "Número de transações por flow e por ano, a partir de 2010", q5)
+
+
 saida.close()
 spark.stop()
