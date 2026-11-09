@@ -54,5 +54,33 @@ transacoes = (sc.textFile(ARQUIVO)
               .cache())
 
 
+# 1 - transações envolvendo o Brasil (RDD)
+q1 = transacoes.filter(lambda x: x[PAIS] == "Brazil").count()
+registrar(1, "Número de transações envolvendo o Brasil (RDD)", q1)
+
+
+# 2 - transações envolvendo o Brasil (PairRDD)
+q2 = (transacoes
+      .filter(lambda x: x[PAIS] == "Brazil")
+      .map(lambda x: (x[PAIS], 1))
+      .reduceByKey(lambda a, b: a + b)
+      .collect())
+registrar(2, "Número de transações envolvendo o Brasil (PairRDD)", q2)
+
+
+# 3 - transações envolvendo o Brasil em 2016 (RDD)
+q3 = transacoes.filter(lambda x: x[PAIS] == "Brazil" and x[ANO] == "2016").count()
+registrar(3, "Número de transações envolvendo o Brasil em 2016 (RDD)", q3)
+
+
+# 4 - transações envolvendo o Brasil em 2016 (PairRDD)
+q4 = (transacoes
+      .filter(lambda x: x[PAIS] == "Brazil" and x[ANO] == "2016")
+      .map(lambda x: ((x[PAIS], int(x[ANO])), 1))
+      .reduceByKey(lambda a, b: a + b)
+      .collect())
+registrar(4, "Número de transações envolvendo o Brasil em 2016 (PairRDD)", q4)
+
+
 saida.close()
 spark.stop()
