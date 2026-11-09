@@ -112,5 +112,17 @@ q7 = (transacoes
 registrar(7, "Média da coluna Price em 2016 (PairRDD)", q7)
 
 
+# 8 - preço máximo e mínimo por ano e categoria
+# o enunciado pede ordenação por país, mas o país não faz parte da chave
+# pedida (ano, categoria), por isso a ordenação ficou pela própria chave
+q8 = (transacoes
+      .map(lambda x: ((int(x[ANO]), x[CATEGORIA].upper()), float(x[PRECO])))
+      .mapValues(lambda x: (x, x))
+      .reduceByKey(lambda a, b: (max(a[0], b[0]), min(a[1], b[1])))
+      .sortByKey()
+      .collect())
+registrar(8, "Preço máximo e mínimo por ano e categoria", q8)
+
+
 saida.close()
 spark.stop()
