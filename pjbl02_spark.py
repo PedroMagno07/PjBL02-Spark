@@ -136,5 +136,27 @@ registrar(9, "País com a maior exportação (PairRDD)", q9[0])
 transacoes.unpersist()
 
 
+# 10 - transação de exportação com o maior preço por kg (Spark SQL)
+# quote vazio porque há descrições com aspas soltas, que quebrariam as colunas
+df = spark.read.csv(ARQUIVO, sep=";", header=True, quote="")
+
+# sem peso, ou com peso zero, não existe preço por kg
+exportacoes = (df
+               .withColumn("trade_usd", F.col("trade_usd").cast("double"))
+               .withColumn("weight_kg", F.col("weight_kg").cast("double"))
+               .dropna(subset=["trade_usd", "weight_kg"])
+               .filter((F.col("flow") == "Export") & (F.col("weight_kg") > 0))
+               .withColumn("preco_kg", F.col("trade_usd") / F.col("weight_kg")))
+
+maior_preco = exportacoes.agg(F.max("preco_kg")).first()[0]
+
+q10 = (exportacoes
+       .filter(F.col("preco_kg") == maior_preco)
+       .select("year", "country_or_area", "category", "commodity",
+               "trade_usd", "weight_kg", "preco_kg")
+       .collect())
+registrar(10, "Transação de exportação com o maior preço por kg (Spark SQL)",
+          [linha.asDict() for linha in q10])
+
 saida.close()
 spark.stop()
