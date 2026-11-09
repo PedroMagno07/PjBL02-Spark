@@ -82,5 +82,35 @@ q4 = (transacoes
 registrar(4, "Número de transações envolvendo o Brasil em 2016 (PairRDD)", q4)
 
 
+# 5 - transações por flow e por ano a partir de 2010
+q5 = (transacoes
+      .filter(lambda x: int(x[ANO]) >= 2010)
+      .map(lambda x: ((int(x[ANO]), x[FLOW].upper()), 1))
+      .reduceByKey(lambda a, b: a + b)
+      .sortByKey()
+      .collect())
+registrar(5, "Número de transações por flow e por ano, a partir de 2010", q5)
+
+
+# 6 - média de Price em 2016 (RDD)
+# junto o contador na mesma tupla para percorrer o RDD uma vez só
+soma, qtd = (transacoes
+             .filter(lambda x: x[ANO] == "2016")
+             .map(lambda x: (float(x[PRECO]), 1))
+             .reduce(lambda a, b: (a[0] + b[0], a[1] + b[1])))
+registrar(6, "Média da coluna Price em 2016 (RDD)", soma / qtd)
+
+
+# 7 - média de Price em 2016 (PairRDD)
+q7 = (transacoes
+      .filter(lambda x: x[ANO] == "2016")
+      .map(lambda x: (int(x[ANO]), float(x[PRECO])))
+      .mapValues(lambda x: (x, 1))
+      .reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1]))
+      .mapValues(lambda x: x[0] / x[1])
+      .collect())
+registrar(7, "Média da coluna Price em 2016 (PairRDD)", q7)
+
+
 saida.close()
 spark.stop()
