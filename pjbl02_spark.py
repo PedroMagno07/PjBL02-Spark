@@ -43,6 +43,11 @@ def linha_valida(campos):
     # e o peso é tratado na questão 10, que é a única que depende dele.
     if len(campos) != 10:
         return False
+    # as linhas com código TOTAL (commodity "ALL COMMODITIES") não são transações:
+    # são a soma de tudo o que o país negociou no ano e no flow. Mantê-las contaria
+    # os mesmos valores duas vezes (mesma decisão do PjBL1).
+    if campos[CODIGO] == "TOTAL":
+        return False
     return all(campos[i].strip() != "" for i in (PAIS, ANO, FLOW, PRECO, CATEGORIA))
 
 
@@ -130,8 +135,8 @@ q9 = (transacoes
       .map(lambda x: ((x[PAIS], x[FLOW]), float(x[PRECO])))
       .reduceByKey(lambda a, b: a + b)
       .sortBy(lambda x: x[1], ascending=False)
-      .collect())
-registrar(9, "País com a maior exportação (PairRDD)", q9[0])
+      .first())  # só o primeiro vai para o driver, em vez de trazer todos com collect
+registrar(9, "País com a maior exportação (PairRDD)", q9)
 
 transacoes.unpersist()
 
@@ -145,7 +150,8 @@ exportacoes = (df
                .withColumn("trade_usd", F.col("trade_usd").cast("double"))
                .withColumn("weight_kg", F.col("weight_kg").cast("double"))
                .dropna(subset=["trade_usd", "weight_kg"])
-               .filter((F.col("flow") == "Export") & (F.col("weight_kg") > 0))
+               .filter((F.col("flow") == "Export") & (F.col("weight_kg") > 0)
+                       & (F.col("comm_code") != "TOTAL"))  # mesmo critério das questões 1 a 9
                .withColumn("preco_kg", F.col("trade_usd") / F.col("weight_kg")))
 
 maior_preco = exportacoes.agg(F.max("preco_kg")).first()[0]
